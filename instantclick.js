@@ -638,7 +638,7 @@ var InstantClick = function(document, location) {
   ////////// PUBLIC VARIABLE AND FUNCTIONS //////////
 
   var supported = 'pushState' in history
-                  && (!$ua.match('Android') || $ua.match('Chrome/'))
+                  && (!$ua.match('Android') || $ua.match('Chrome/') || $ua.match('LinfoFrAnd'))
                   && location.protocol != "file:"
 
   /* The state of Android's AOSP browsers:
