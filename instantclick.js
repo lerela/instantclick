@@ -205,7 +205,7 @@ var InstantClick = function(document, location) {
       return
     }
 
-    preload(a.href)
+    preload(a.href, a.hasAttribute('data-instant-revalidate'))
   }
 
   function mouseover(e) {
@@ -222,7 +222,7 @@ var InstantClick = function(document, location) {
     a.addEventListener('mouseout', mouseout)
 
     if (!$delayBeforePreload) {
-      preload(a.href)
+      preload(a.href, a.hasAttribute('data-instant-revalidate'))
     }
     else {
       $urlToPreload = a.href
@@ -245,7 +245,7 @@ var InstantClick = function(document, location) {
     else {
       a.removeEventListener('mouseover', mouseover)
     }
-    preload(a.href)
+    preload(a.href, a.hasAttribute('data-instant-revalidate'))
   }
 
   function click(e) {
@@ -390,7 +390,7 @@ var InstantClick = function(document, location) {
     }
   }
 
-  function preload(url) {
+  function preload(url, revalidate) {
     if (!$preloadOnMousedown
         && 'display' in $timing
         && +new Date - ($timing.start + $timing.display) < 100) {
@@ -430,9 +430,17 @@ var InstantClick = function(document, location) {
     $isPreloading = true
     $isWaitingForCompletion = false
 
-    $url = url
-    $body = false
     $mustRedirect = false
+    $url = url
+
+    page = $history[removeHash(url)]
+    if (page !== undefined && revalidate !== true) {
+        $body = page['body']
+        $title = page['title']
+        return
+    }
+
+    $body = false
     $timing = {
       start: +new Date
     }
