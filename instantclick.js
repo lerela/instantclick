@@ -267,7 +267,11 @@ var InstantClick = function(document, location) {
     display(a.href)
   }
 
-  function mouseout() {
+  function mouseout(e) {
+    if (e.target.nodeName != 'A') { // Cursor is still in the <a>, don't abort 
+        return
+    }
+
     if ($preloadTimer) {
       clearTimeout($preloadTimer)
       $preloadTimer = false
