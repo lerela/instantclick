@@ -9,6 +9,7 @@ var InstantClick = function(document, location) {
       $urlToPreload,
       $preloadTimer,
       $lastTouchTimestamp,
+      $getContainer=function() { return $("#wrapper-container") }, // the DOM changes, hence the function
 
   // Preloading-related variables
       $history = {},
@@ -139,19 +140,16 @@ var InstantClick = function(document, location) {
                      && document.getElementById(newUrl.substr(hashIndex + 1)),
           offset = 0
 
-      if (hashElem) {
-        while (hashElem.offsetParent) {
-          offset += hashElem.offsetTop
-
-          hashElem = hashElem.offsetParent
-        }
-      }
-      scrollTo(0, offset)
+      $getContainer().animate({
+        scrollTop: parseInt(offset)
+      })
 
       $currentLocationWithoutHash = removeHash(newUrl)
     }
     else {
-      scrollTo(0, scrollY)
+      $getContainer().animate({
+        scrollTop: parseInt(scrollY)
+      })
     }
 
     if ($isChromeForIOS && document.title == title) {
@@ -512,7 +510,7 @@ var InstantClick = function(document, location) {
       $isWaitingForCompletion = true
       return
     }
-    $history[$currentLocationWithoutHash].scrollY = pageYOffset
+    $history[$currentLocationWithoutHash].scrollY = $getContainer()[0].scrollTop
     setPreloadingAsHalted()
     changePage($title, $body, $url)
   }
