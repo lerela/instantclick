@@ -13,6 +13,7 @@ var InstantClick = function(document, location) {
 
   // Preloading-related variables
       $history = {},
+      $maxHistory = 50,
       $xhr,
       $url = false,
       $title = false,
@@ -312,10 +313,20 @@ var InstantClick = function(document, location) {
       }
 
       var urlWithoutHash = removeHash($xhr._url)
+      delete $history[urlWithoutHash] // To mimic a FIFO, we need to reinsert the page
       $history[urlWithoutHash] = {
         body: $body,
         title: $title,
         scrollY: urlWithoutHash in $history ? $history[urlWithoutHash].scrollY : 0
+      }
+
+      var historyLength = Object.keys($history).length
+      if (historyLength > $maxHistory) {
+        to_remove = historyLength - $maxHistory
+        for (var e in $history) {
+          if (to_remove-- <= 0) { break }
+          delete $history[e]
+        }
       }
 
       var elems = doc.head.children,
