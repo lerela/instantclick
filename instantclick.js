@@ -258,6 +258,11 @@ var InstantClick = function(document, location) {
     if (e.which > 1 || e.metaKey || e.ctrlKey) { // Opening in new tab
       return
     }
+
+    if (a.hasAttribute('data-instant-no-open')) {
+        return
+    }
+
     e.preventDefault()
     display(a.href)
   }
