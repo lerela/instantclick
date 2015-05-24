@@ -297,6 +297,7 @@ var InstantClick = function(document, location) {
     $timing.ready = +new Date - $timing.start
 
     if ($xhr.getResponseHeader('Content-Type').match(/\/(x|ht|xht)ml/)) {
+
       var doc = document.implementation.createHTMLDocument('')
       doc.documentElement.innerHTML = removeNoscriptTags($xhr.responseText)
       $title = doc.title
@@ -312,7 +313,7 @@ var InstantClick = function(document, location) {
         }
       }
 
-      var urlWithoutHash = removeHash($url)
+      var urlWithoutHash = removeHash($xhr._url)
       $history[urlWithoutHash] = {
         body: $body,
         title: $title,
@@ -391,6 +392,7 @@ var InstantClick = function(document, location) {
   }
 
   function preload(url, revalidate) {
+
     if (!$preloadOnMousedown
         && 'display' in $timing
         && +new Date - ($timing.start + $timing.display) < 100) {
@@ -434,6 +436,7 @@ var InstantClick = function(document, location) {
     $url = url
 
     page = $history[removeHash(url)]
+
     if (page !== undefined && revalidate !== true) {
         $body = page['body']
         $title = page['title']
@@ -446,6 +449,7 @@ var InstantClick = function(document, location) {
     }
     triggerPageEvent('fetch')
     $xhr.open('GET', url)
+    $xhr.setRequestHeader('X-InstantClick', '3.1+')
     $xhr.send()
   }
 
@@ -728,6 +732,14 @@ var InstantClick = function(document, location) {
         $trackedAssets.push(data)
       }
     }
+
+    var xhrProto = XMLHttpRequest.prototype,
+    origOpen = xhrProto.open;
+
+    xhrProto.open = function (method, url) {
+        this._url = url;
+        return origOpen.apply(this, arguments);
+    };
 
     $xhr = new XMLHttpRequest()
     $xhr.addEventListener('readystatechange', readystatechange)
