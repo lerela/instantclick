@@ -9,7 +9,7 @@ var InstantClick = function(document, location) {
       $urlToPreload,
       $preloadTimer,
       $lastTouchTimestamp,
-      $getContainer=function() { return $("#wrapper-container") }, // the DOM changes, hence the function
+      $getContainer=function() { return $("html").hasClass("android") ? $("body") : $("#wrapper-container") }, // the DOM changes, hence the function
 
   // Preloading-related variables
       $history = {},
@@ -32,6 +32,7 @@ var InstantClick = function(document, location) {
         fetch: [],
         receive: [],
         wait: [],
+        beforechange: [],
         change: []
       }
 
@@ -128,6 +129,7 @@ var InstantClick = function(document, location) {
   }
 
   function changePage(title, body, newUrl, scrollY) {
+    triggerPageEvent('beforechange', false)
     document.documentElement.replaceChild(body, document.body)
     /* We cannot just use `document.body = doc.body`, it causes Safari (tested
        5.1, 6.0 and Mobile 7.0) to execute script tags directly.
@@ -141,16 +143,12 @@ var InstantClick = function(document, location) {
                      && document.getElementById(newUrl.substr(hashIndex + 1)),
           offset = 0
 
-      $getContainer().animate({
-        scrollTop: parseInt(offset)
-      })
+      $getContainer()[0].scrollTop = offset
 
       $currentLocationWithoutHash = removeHash(newUrl)
     }
     else {
-      $getContainer().animate({
-        scrollTop: parseInt(scrollY)
-      })
+      $getContainer()[0].scrollTop = scrollY
     }
 
     if ($isChromeForIOS && document.title == title) {
@@ -230,6 +228,10 @@ var InstantClick = function(document, location) {
   }
 
   function touchstart(e) {
+    if ($preloadOnMousedown) {
+      return
+    }
+
     $lastTouchTimestamp = +new Date
 
     var a = getLinkTarget(e.target)
@@ -238,9 +240,7 @@ var InstantClick = function(document, location) {
       return
     }
 
-    if ($preloadOnMousedown) {
-      a.removeEventListener('mousedown', mousedown)
-    }
+
     else {
       a.removeEventListener('mouseover', mouseover)
     }
@@ -248,7 +248,11 @@ var InstantClick = function(document, location) {
   }
 
   function click(e) {
-    var a = getLinkTarget(e.target)
+     var a = getLinkTarget(e.target)
+
+    if (!FastClick.notNeeded(document.body) && !e.forwardedTouchEvent) {
+        return
+    }
 
     if (!a || !isPreloadable(a)) {
       return
@@ -438,6 +442,7 @@ var InstantClick = function(document, location) {
     if ($isPreloading && (url == $url || $isWaitingForCompletion)) {
       return
     }
+
     $isPreloading = true
     $isWaitingForCompletion = false
 
@@ -449,7 +454,7 @@ var InstantClick = function(document, location) {
     if (page !== undefined && revalidate !== true) {
         $body = page['body']
         $title = page['title']
-        return
+        return true
     }
 
     $body = false
@@ -466,7 +471,7 @@ var InstantClick = function(document, location) {
     if (!('display' in $timing)) {
       $timing.display = +new Date - $timing.start
     }
-    if ($preloadTimer || !$isPreloading) {
+    if ($preloadTimer || !$isPreloading || url != $url) {
       /* $preloadTimer:
          Happens when there’s a delay before preloading and that delay
          hasn't expired (preloading didn't kick in).
@@ -494,11 +499,13 @@ var InstantClick = function(document, location) {
         return
       }
 
-      preload(url)
-      bar.start(0, true)
-      triggerPageEvent('wait')
-      $isWaitingForCompletion = true // Must be set *after* calling `preload`
-      return
+      var alreadyLoaded = preload(url)
+      if (!alreadyLoaded) {
+          bar.start(0, true)
+          triggerPageEvent('wait')
+          $isWaitingForCompletion = true // Must be set *after* calling `preload`
+          return
+      }
     }
     if ($isWaitingForCompletion) {
       /* The user clicked on a link while a page was preloading. Either on
